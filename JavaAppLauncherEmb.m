@@ -111,14 +111,33 @@ int launch(char *commandName) {
     NSString *runtime = [infoDictionary objectForKey:@JVM_RUNTIME_KEY];
     
     const char *libjliPath = NULL;
+    void *      libJLI     = NULL;
     if (runtime != nil) {
         NSString *runtimePath = [[[NSBundle mainBundle] builtInPlugInsPath] stringByAppendingPathComponent:runtime];
         libjliPath = [[runtimePath stringByAppendingPathComponent:@"Contents/Home/jre/lib/jli/libjli.dylib"] fileSystemRepresentation];
+        libJLI = dlopen(libjliPath, RTLD_LAZY);
+        
+        if (libJLI == NULL)
+        {
+            libjliPath = [[runtimePath stringByAppendingPathComponent:@"Contents/Home/jre/lib/libjli.dylib"] fileSystemRepresentation];
+            libJLI = dlopen(libjliPath, RTLD_LAZY);
+        }
+        
+        if (libJLI == NULL)
+        {
+            libjliPath = [[runtimePath stringByAppendingPathComponent:@"Contents/Home/lib/jli/libjli.dylib"] fileSystemRepresentation];
+            libJLI = dlopen(libjliPath, RTLD_LAZY);
+        }
+        
+        if (libJLI == NULL)
+        {
+            libjliPath = [[runtimePath stringByAppendingPathComponent:@"Contents/Home/lib/libjli.dylib"] fileSystemRepresentation];
+            libJLI = dlopen(libjliPath, RTLD_LAZY);
+        }
     } else {
         libjliPath = LIBJLI_DYLIB;
+        libJLI = dlopen(libjliPath, RTLD_LAZY);
     }
-    
-    void *libJLI = dlopen(libjliPath, RTLD_LAZY);
     
     JLI_Launch_t jli_LaunchFxnPtr = NULL;
     if (libJLI != NULL) {
